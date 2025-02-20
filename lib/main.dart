@@ -2,111 +2,119 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
 
+// Punto de entrada de la aplicación Flutter
 void main() => runApp(MyApp());
 
+// Widget principal de la aplicación
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      debugShowCheckedModeBanner: false, // Oculta la marca de depuración
+      home: HomePage(), // Establece la página principal del juego
     );
   }
 }
 
+// Widget con estado para la página principal del juego
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  //Posición de la serpiente en la tabla en forma de lista
+  // Lista que almacena la posición de cada segmento de la serpiente en la cuadrícula
   static List<int> snakePosition = [45, 65, 85, 105, 125];
-  //Número de cuadros en la tabla del juego
+
+  // Número total de cuadros en la cuadrícula del juego (20x38)
   int numberOfSquares = 760;
 
+  // Generador de números aleatorios para la posición de la comida
   static var randomNumber = Random();
-  //Posicion de la comida en la tabla
+
+  // Posición inicial de la comida en la cuadrícula
   int food = randomNumber.nextInt(700);
 
-  //Funcion para generar la comida en una posicion aleatoria
+  // Función para generar una nueva posición de comida aleatoria
   void generateNewFood() {
     food = randomNumber.nextInt(700);
-    //While que asegura que la comida no aparezca en la posicion de la serpiente
+    // Asegura que la comida no aparezca en la posición de la serpiente
     while (snakePosition.contains(food)) {
       food = randomNumber.nextInt(700);
     }
   }
 
-  //Funcion para iniciar el juego
+  // Función para iniciar el juego
   void startGame() {
-    //Posicion incial de la serpiente
+    // Restablece la posición inicial de la serpiente
     snakePosition = [45, 65, 85, 105, 125];
 
-    //Temporizador de duracion 100 ms para mover la serpiente
+    // Temporizador para mover la serpiente cada 100 milisegundos
     const duration = Duration(milliseconds: 100);
     Timer.periodic(duration, (Timer timer) {
-      updateSnake();
+      updateSnake(); // Actualiza la posición de la serpiente
       if (gameOver()) {
-        timer.cancel();
-        //En caso de perder, el temporizador se detiene y muestra la pantalla de game over
-        _showGameOverScreen();
+        timer.cancel(); // Detiene el temporizador si el juego termina
+        _showGameOverScreen(); // Muestra la pantalla de fin de juego
       }
     });
   }
 
-//Funcion para mover la serpiente en la direccion que se desee y de "teletransportarla" al pasar de los bordes de la pantalla
+  // Variable para controlar la dirección actual de la serpiente
   var direction = 'down';
+
+  // Función para actualizar la posición de la serpiente
   void updateSnake() {
     setState(() {
+      // Determina la nueva posición según la dirección actual
       switch (direction) {
-        //Se mueve hacia abajo
         case 'down':
+          // Si la serpiente alcanza el borde inferior, "teletransporta" a la parte superior
           if (snakePosition.last > 740) {
             snakePosition.add(snakePosition.last + 20 - 760);
           } else {
             snakePosition.add(snakePosition.last + 20);
           }
-
           break;
-        //Se mueve hacia arriba
         case 'up':
+          // Si alcanza el borde superior, "teletransporta" a la parte inferior
           if (snakePosition.last < 20) {
             snakePosition.add(snakePosition.last - 20 + 760);
           } else {
             snakePosition.add(snakePosition.last - 20);
           }
           break;
-        //Se mueve hacia la izquierda
         case 'left':
+          // Si cruza el borde izquierdo, reaparece en el derecho
           if (snakePosition.last % 20 == 0) {
             snakePosition.add(snakePosition.last - 1 + 20);
           } else {
             snakePosition.add(snakePosition.last - 1);
           }
           break;
-        //Se mueve hacia la derecha
         case 'right':
+          // Si cruza el borde derecho, reaparece en el izquierdo
           if ((snakePosition.last + 1) % 20 == 0) {
             snakePosition.add(snakePosition.last + 1 - 20);
           } else {
             snakePosition.add(snakePosition.last + 1);
           }
           break;
-
         default:
       }
-      // Si la serpiente come la comida, se genera una nueva, de lo contrario, se elimina la ultima posición de la serpiente
+
+      // Verifica si la serpiente comió la comida
       if (snakePosition.last == food) {
-        generateNewFood();
+        generateNewFood(); // Genera nueva comida si la serpiente la come
       } else {
-        snakePosition.removeAt(0);
+        snakePosition.removeAt(0); // Elimina la última posición si no come
       }
     });
   }
 
-  //Se verifica si la serpiente se come a si misma, y en ese caso se detiene el juego
+  // Verifica si el juego ha terminado (colisión de la serpiente consigo misma)
   bool gameOver() {
     for (int i = 0; i < snakePosition.length; i++) {
       int count = 0;
@@ -115,22 +123,22 @@ class _HomePageState extends State<HomePage> {
           count += 1;
         }
         if (count == 2) {
-          return true;
+          return true; // Termina el juego si hay colisión
         }
       }
     }
     return false;
   }
 
-  //Pantalla de game over, muestra cuantas manzanas se comieron y un boton para volver a jugar
+  // Muestra la pantalla de "Game Over" con la cantidad de manzanas comidas
   void _showGameOverScreen() {
     showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('GAME OVER'),
+            title: Text('GAME OVER'), // Título del cuadro de diálogo
             content: Text(
-              'You ate ${snakePosition.length} apples',
+              'You ate ${snakePosition.length - 5} apples',
               style: TextStyle(
                   color: const Color.fromARGB(255, 230, 0, 0), fontSize: 20),
             ),
@@ -143,8 +151,8 @@ class _HomePageState extends State<HomePage> {
                       fontSize: 20),
                 ),
                 onPressed: () {
-                  startGame();
-                  Navigator.of(context).pop();
+                  startGame(); // Reinicia el juego
+                  Navigator.of(context).pop(); // Cierra el cuadro de diálogo
                 },
               )
             ],
@@ -155,13 +163,12 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      //appBar: appBar(),
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.black, // Fondo negro para la interfaz principal
       body: Column(
         children: <Widget>[
           Expanded(
             child: GestureDetector(
-              // Detecta el gesto tactil vertical para cambiar la dirección de la serpiente
+              // Detecta deslizamientos verticales para cambiar la dirección
               onVerticalDragUpdate: (details) {
                 if (direction != 'up' && details.delta.dy > 0) {
                   direction = 'down';
@@ -169,7 +176,7 @@ class _HomePageState extends State<HomePage> {
                   direction = 'up';
                 }
               },
-              // Detecta el gesto tactil horizontal para cambiar la dirección de la serpiente
+              // Detecta deslizamientos horizontales para cambiar la dirección
               onHorizontalDragUpdate: (details) {
                 if (direction != 'left' && details.delta.dx > 0) {
                   direction = 'right';
@@ -177,51 +184,56 @@ class _HomePageState extends State<HomePage> {
                   direction = 'left';
                 }
               },
-
               child: Container(
                 child: GridView.builder(
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount: numberOfSquares,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 20),
-                    itemBuilder: (BuildContext context, int index) {
-                      //Se utiliza verde para cada cuadro en la tabla que representa la serpiente, de rojo la comida y de gris los cuadros vacios
-                      if (snakePosition.contains(index)) {
-                        return Center(
+                  physics:
+                      NeverScrollableScrollPhysics(), // Evita el desplazamiento
+                  itemCount:
+                      numberOfSquares, // Total de cuadros en la cuadrícula
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 20), // 20 cuadros por fila
+                  itemBuilder: (BuildContext context, int index) {
+                    // Determina el color de cada celda: serpiente, comida o vacío
+                    if (snakePosition.contains(index)) {
+                      return Center(
+                        child: Container(
+                          padding: EdgeInsets.all(2),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(5),
+                            child: Container(
+                              color: const Color.fromARGB(255, 0, 255, 26),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    if (index == food) {
+                      return Container(
+                        padding: EdgeInsets.all(2),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
                           child: Container(
-                            padding: EdgeInsets.all(2),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(5),
-                              child: Container(
-                                color: const Color.fromARGB(255, 0, 255, 26),
-                              ), //Container
-                            ), //ClipRRect
-                          ), //Container
-                        ); //Center
-                      }
-                      if (index == food) {
-                        return Container(
-                          padding: EdgeInsets.all(2),
-                          child: ClipRRect(
-                              borderRadius: BorderRadius.circular(5),
-                              child: Container(
-                                  color: const Color.fromARGB(
-                                      255, 230, 0, 0))), //ClipRRect
-                        );
-                      } else {
-                        return Container(
-                          padding: EdgeInsets.all(2),
-                          child: ClipRRect(
-                              borderRadius: BorderRadius.circular(5),
-                              child: Container(
-                                  color: Colors.grey[900])), //ClipRRect
-                        ); //Container
-                      }
-                    }), //GridView.builder
-              ), //Container
-            ), //GestureDetector
-          ), //Expanded
-          //Franja en la parte inferior de la pantalla que muestra el boton de start game y el nombre del juego
+                            color: const Color.fromARGB(255, 230, 0, 0),
+                          ),
+                        ),
+                      );
+                    } else {
+                      return Container(
+                        padding: EdgeInsets.all(2),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: Container(
+                            color: Colors.grey[900], // Cuadros vacíos
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ),
+          ),
+          // Barra inferior con botón para iniciar el juego y el nombre del juego
           Padding(
             padding:
                 const EdgeInsets.only(bottom: 20.0, left: 20.0, right: 20.0),
@@ -229,25 +241,25 @@ class _HomePageState extends State<HomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 GestureDetector(
-                  onTap: startGame,
+                  onTap: startGame, // Inicia el juego al presionar
                   child: Text(
                     'START GAME',
                     style: TextStyle(
                         color: const Color.fromARGB(255, 0, 238, 255),
                         fontSize: 20),
-                  ), //Text
-                ), //GestureDetector
+                  ),
+                ),
                 Text(
-                  'SNAKE GAME',
+                  'SNAKE GAME', // Nombre del juego en la parte inferior
                   style: TextStyle(
                       color: const Color.fromARGB(255, 21, 0, 255),
                       fontSize: 20),
-                ) //Text
-              ], //<Widget>[]
-            ), //Row
-          ) //Padding
-        ], //<Widget>[]
-      ), //Column
-    ); //Scaffold
+                )
+              ],
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
